@@ -23,7 +23,7 @@ export default {
         parts: [{ text: String(m.content || "").slice(0, 4000) }]
       }));
       if (!contents.length) throw Error("Empty conversation");
-      const upstream = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", {
+      const upstream = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
         body: JSON.stringify({ systemInstruction: { parts: [{ text: "You are JARVIS, a concise, friendly personal AI assistant. Reply in the user's language, including Hinglish." }] }, contents, generationConfig: { maxOutputTokens: 700 } })
