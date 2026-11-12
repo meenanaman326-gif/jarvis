@@ -23,23 +23,40 @@ export default {
         parts: [{ text: String(m.content || "").slice(0, 4000) }]
       }));
       if (!contents.length) throw Error("Empty conversation");
-      const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
+      const primaryModel = "gemini-3.8-flash";
       const payload = JSON.stringify({
         systemInstruction: { parts: [{ text: "You are JARVIS, a concise, friendly personal AI assistant. Reply in the user's language, including Hinglish." }] },
         contents,
         generationConfig: { maxOutputTokens: 350, temperature: 0.6 }
       });
-      let upstream, data;
-      for (let attempt = 0; attempt < 2; attempt++) {
-        upstream = await fetch(endpoint, {
+      const apiBase = "https://generativelanguage.googleapis.com/v1beta/";
+      async function callModel(model) {
+        const response = await fetch(apiBase + "models/" + encodeURIComponent(model) + ":generateContent", {
           method: "POST",
           headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
           body: payload,
-          signal: AbortSignal.timeout(12000)
+          signal: AbortSignal.timeout(10000)
         });
-        data = await upstream.json().catch(() => ({}));
-        if (![429, 500, 502, 503, 504].includes(upstream.status) || attempt === 1) break;
-        await new Promise(resolve => setTimeout(resolve, 350 * (attempt + 1)));
+        return { response, data: await response.json().catch(() => ({})) };
+      }
+      let { response: upstream, data } = await callModel(primaryModel);
+      if ([429, 500, 502, 503, 504].includes(upstream.status)) {
+        // Discover fallback models from the user's actual API access, not a guessed model name.
+        try {
+          const catalogResponse = await fetch(apiBase + "models?pageSize=100", {
+            headers: { "x-goog-api-key": env.GEMINI_API_KEY },
+            signal: AbortSignal.timeout(4500)
+          });
+          if (catalogResponse.ok) {
+            const catalog = await catalogResponse.json();
+            const fallback = (catalog.models || [])
+              .filter(m => m.supportedGenerationMethods?.includes("generateContent"))
+              .map(m => (m.name || "").replace(/^models\//, ""))
+              .filter(name => name !== primaryModel && /flash/i.test(name) && !/image|tts|audio|live|embedding|preview/i.test(name))
+              .sort((a, b) => Number(/lite/i.test(b)) - Number(/lite/i.test(a)))[0];
+            if (fallback) ({ response: upstream, data } = await callModel(fallback));
+          }
+        } catch (_) { /* Keep original upstream error if fallback discovery fails. */ }
       }
       if (!upstream.ok) {
         const reason = upstream.status === 503 ? "Gemini model is overloaded right now. Please try again in a minute." : (data.error?.message || "Gemini service returned an error");
