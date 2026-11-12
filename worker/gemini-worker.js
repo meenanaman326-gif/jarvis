@@ -23,13 +23,27 @@ export default {
         parts: [{ text: String(m.content || "").slice(0, 4000) }]
       }));
       if (!contents.length) throw Error("Empty conversation");
-      const upstream = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-        body: JSON.stringify({ systemInstruction: { parts: [{ text: "You are JARVIS, a concise, friendly personal AI assistant. Reply in the user's language, including Hinglish." }] }, contents, generationConfig: { maxOutputTokens: 700 } })
+      const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+      const payload = JSON.stringify({
+        systemInstruction: { parts: [{ text: "You are JARVIS, a concise, friendly personal AI assistant. Reply in the user's language, including Hinglish." }] },
+        contents,
+        generationConfig: { maxOutputTokens: 700 }
       });
-      const data = await upstream.json();
-      if (!upstream.ok) return Response.json({ error: data.error?.message || "AI request failed" }, { status: upstream.status, headers: cors });
+      let upstream, data;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        upstream = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+          body: payload
+        });
+        data = await upstream.json().catch(() => ({}));
+        if (![429, 500, 502, 503, 504].includes(upstream.status) || attempt === 1) break;
+        await new Promise(resolve => setTimeout(resolve, 800));
+      }
+      if (!upstream.ok) {
+        const reason = data.error?.message || "Gemini service returned an error";
+        return Response.json({ error: "Gemini API (" + upstream.status + "): " + reason }, { status: 502, headers: cors });
+      }
       const reply = data.candidates?.[0]?.content?.parts?.map(p => p.text || "").join("").trim();
       if (!reply) throw Error("Empty AI response");
       return Response.json({ reply }, { headers: cors });
