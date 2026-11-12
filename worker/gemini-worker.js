@@ -30,18 +30,18 @@ export default {
         generationConfig: { maxOutputTokens: 700 }
       });
       let upstream, data;
-      for (let attempt = 0; attempt < 2; attempt++) {
+      for (let attempt = 0; attempt < 3; attempt++) {
         upstream = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
           body: payload
         });
         data = await upstream.json().catch(() => ({}));
-        if (![429, 500, 502, 503, 504].includes(upstream.status) || attempt === 1) break;
-        await new Promise(resolve => setTimeout(resolve, 800));
+        if (![429, 500, 502, 503, 504].includes(upstream.status) || attempt === 2) break;
+        await new Promise(resolve => setTimeout(resolve, 1500 * (attempt + 1)));
       }
       if (!upstream.ok) {
-        const reason = data.error?.message || "Gemini service returned an error";
+        const reason = upstream.status === 503 ? "Gemini model is overloaded right now. Please try again in a minute." : (data.error?.message || "Gemini service returned an error");
         return Response.json({ error: "Gemini API (" + upstream.status + "): " + reason }, { status: 502, headers: cors });
       }
       const reply = data.candidates?.[0]?.content?.parts?.map(p => p.text || "").join("").trim();
