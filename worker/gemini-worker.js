@@ -27,18 +27,19 @@ export default {
       const payload = JSON.stringify({
         systemInstruction: { parts: [{ text: "You are JARVIS, a concise, friendly personal AI assistant. Reply in the user's language, including Hinglish." }] },
         contents,
-        generationConfig: { maxOutputTokens: 700 }
+        generationConfig: { maxOutputTokens: 350, temperature: 0.6 }
       });
       let upstream, data;
-      for (let attempt = 0; attempt < 3; attempt++) {
+      for (let attempt = 0; attempt < 2; attempt++) {
         upstream = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-          body: payload
+          body: payload,
+          signal: AbortSignal.timeout(12000)
         });
         data = await upstream.json().catch(() => ({}));
-        if (![429, 500, 502, 503, 504].includes(upstream.status) || attempt === 2) break;
-        await new Promise(resolve => setTimeout(resolve, 1500 * (attempt + 1)));
+        if (![429, 500, 502, 503, 504].includes(upstream.status) || attempt === 1) break;
+        await new Promise(resolve => setTimeout(resolve, 350 * (attempt + 1)));
       }
       if (!upstream.ok) {
         const reason = upstream.status === 503 ? "Gemini model is overloaded right now. Please try again in a minute." : (data.error?.message || "Gemini service returned an error");
