@@ -1,72 +1,66 @@
-// Cloudflare Worker — deploy this as a Worker, not GitHub Pages.
-// Set GEMINI_API_KEY as an encrypted Worker secret, never in source code.
-// Set ALLOWED_ORIGIN to your GitHub Pages URL, e.g. https://meenanaman326-gif.github.io
+// JARVIS Cloudflare Worker. GEMINI_API_KEY must be a Cloudflare Secret.
+const API = "https://generativelanguage.googleapis.com/v1beta";
+const ALLOWED = "https://meenanaman326-gif.github.io";
+const SYSTEM = "You are JARVIS, a helpful and efficient voice-first assistant. Answer directly in the user's language (Hindi, Hinglish, or English). Be concise unless detail is requested.";
+let modelCache = { names: [], expires: 0 };
+function json(body, status, headers) { return new Response(JSON.stringify(body), { status, headers: { ...headers, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } }); }
+async function timedFetch(url, options, ms) {
+  return fetch(url, { ...options, signal: AbortSignal.timeout(ms) });
+}
+async function models(key) {
+  if (modelCache.expires > Date.now()) return modelCache.names;
+  const response = await timedFetch(API + "/models?pageSize=100", { headers: { "x-goog-api-key": key } }, 4500);
+  if (!response.ok) throw new Error("Model discovery unavailable (" + response.status + ")");
+  const data = await response.json();
+  const names = (data.models || []).filter(m => m.supportedGenerationMethods?.includes("generateContent"))
+    .map(m => (m.name || "").replace(/^models\//, ""))
+    .filter(n => /flash/i.test(n) && !/image|tts|audio|live|embedding|preview|experimental/i.test(n));
+  // Lite is usually quicker; prefer available stable Flash variants.
+  names.sort((a,b) => Number(/lite/i.test(b)) - Number(/lite/i.test(a)));
+  modelCache = { names, expires: Date.now() + 15 * 60 * 1000 };
+  return names;
+}
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
-    const allowed = env.ALLOWED_ORIGIN || "https://meenanaman326-gif.github.io";
-    const cors = {
-      "Access-Control-Allow-Origin": origin === allowed ? origin : allowed,
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-      "Vary": "Origin",
-    };
+    const allowed = env.ALLOWED_ORIGIN || ALLOWED;
+    const cors = { "Access-Control-Allow-Origin": allowed, "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type", "Vary": "Origin" };
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
-    if (request.method !== "POST") return new Response("Method not allowed", { status: 405, headers: cors });
-    if (origin !== allowed) return new Response("Origin not allowed", { status: 403, headers: cors });
-    if (!env.GEMINI_API_KEY) return Response.json({ error: "Missing GEMINI_API_KEY secret" }, { status: 500, headers: cors });
-    try {
-      const { messages } = await request.json();
-      if (!Array.isArray(messages) || messages.length > 24) throw Error("Invalid conversation");
-      const contents = messages.filter(m => ["user", "assistant"].includes(m.role)).map(m => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: String(m.content || "").slice(0, 4000) }]
-      }));
-      if (!contents.length) throw Error("Empty conversation");
-      const primaryModel = "gemini-3.8-flash";
-      const payload = JSON.stringify({
-        systemInstruction: { parts: [{ text: "You are JARVIS, a concise, friendly personal AI assistant. Reply in the user's language, including Hinglish." }] },
-        contents,
-        generationConfig: { maxOutputTokens: 350, temperature: 0.6 }
-      });
-      const apiBase = "https://generativelanguage.googleapis.com/v1beta/";
-      async function callModel(model) {
-        const response = await fetch(apiBase + "models/" + encodeURIComponent(model) + ":generateContent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-          body: payload,
-          signal: AbortSignal.timeout(10000)
-        });
-        return { response, data: await response.json().catch(() => ({})) };
-      }
-      let { response: upstream, data } = await callModel(primaryModel);
-      if ([429, 500, 502, 503, 504].includes(upstream.status)) {
-        // Discover fallback models from the user's actual API access, not a guessed model name.
-        try {
-          const catalogResponse = await fetch(apiBase + "models?pageSize=100", {
-            headers: { "x-goog-api-key": env.GEMINI_API_KEY },
-            signal: AbortSignal.timeout(4500)
-          });
-          if (catalogResponse.ok) {
-            const catalog = await catalogResponse.json();
-            const fallback = (catalog.models || [])
-              .filter(m => m.supportedGenerationMethods?.includes("generateContent"))
-              .map(m => (m.name || "").replace(/^models\//, ""))
-              .filter(name => name !== primaryModel && /flash/i.test(name) && !/image|tts|audio|live|embedding|preview/i.test(name))
-              .sort((a, b) => Number(/lite/i.test(b)) - Number(/lite/i.test(a)))[0];
-            if (fallback) ({ response: upstream, data } = await callModel(fallback));
-          }
-        } catch (_) { /* Keep original upstream error if fallback discovery fails. */ }
-      }
-      if (!upstream.ok) {
-        const reason = upstream.status === 503 ? "Gemini model is overloaded right now. Please try again in a minute." : (data.error?.message || "Gemini service returned an error");
-        return Response.json({ error: "Gemini API (" + upstream.status + "): " + reason }, { status: 502, headers: cors });
-      }
-      const reply = data.candidates?.[0]?.content?.parts?.map(p => p.text || "").join("").trim();
-      if (!reply) throw Error("Empty AI response");
-      return Response.json({ reply }, { headers: cors });
-    } catch (e) {
-      return Response.json({ error: e.message || "Unexpected error" }, { status: 400, headers: cors });
+    if (request.method === "GET") return json({ service: "jarvis", status: "online", keyConfigured: !!env.GEMINI_API_KEY }, 200, cors);
+    if (request.method !== "POST") return json({ error: "Method not allowed" }, 405, cors);
+    if (origin !== allowed) return json({ error: "Origin not allowed" }, 403, cors);
+    if (!env.GEMINI_API_KEY) return json({ error: "GEMINI_API_KEY secret is missing from this deployment." }, 503, cors);
+    let messages;
+    try { ({ messages } = await request.json()); } catch { return json({ error: "Invalid request JSON" }, 400, cors); }
+    if (!Array.isArray(messages) || !messages.length || messages.length > 25) return json({ error: "Invalid messages" }, 400, cors);
+    const contents = messages.filter(m => m && (m.role === "user" || m.role === "assistant")).slice(-12)
+      .map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: String(m.content || "").slice(0, 2000) }] }));
+    if (!contents.length || contents.at(-1).role !== "user") return json({ error: "Last message must be from user" }, 400, cors);
+    const payload = JSON.stringify({ systemInstruction: { parts: [{ text: SYSTEM }] }, contents, generationConfig: { maxOutputTokens: 220, temperature: 0.5 } });
+    const key = env.GEMINI_API_KEY;
+    let names;
+    try { names = await models(key); }
+    catch (e) { names = ["gemini-3.8-flash"]; }
+    if (!names.length) return json({ error: "No compatible Gemini Flash model found for this API key." }, 503, cors);
+    const tried = [];
+    for (const name of names.slice(0, 3)) {
+      try {
+        const res = await timedFetch(API + "/models/" + encodeURIComponent(name) + ":generateContent", {
+          method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: payload
+        }, 7500);
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          const reply = data.candidates?.[0]?.content?.parts?.map(p => p.text || "").join("").trim();
+          if (reply) return json({ reply, model: name }, 200, cors);
+          tried.push(name + ": empty response"); continue;
+        }
+        const reason = data.error?.message || "API error";
+        tried.push(name + ": " + res.status);
+        if (![404, 429, 500, 502, 503, 504].includes(res.status)) {
+          return json({ error: "Gemini (" + res.status + "): " + reason.slice(0, 250) }, 502, cors);
+        }
+      } catch (e) { tried.push(name + ": " + (e.name === "TimeoutError" ? "timeout" : "network error")); }
     }
+    return json({ error: "AI models are busy or timed out. Try again shortly.", attempts: tried }, 503, cors);
   }
 };
