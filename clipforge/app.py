@@ -235,7 +235,7 @@ def read_cues(path):
 def yt_download(url, folder):
     # Only for videos the user owns or has explicit permission to use.
     template = str(folder / "source.%(ext)s")
-    cmd = ["yt-dlp", "--no-playlist", "--no-progress", "--restrict-filenames",
+    cmd = ["yt-dlp", "--js-runtimes", "node", "--remote-components", "ejs:github", "--no-playlist", "--no-progress", "--restrict-filenames",
            "--socket-timeout", "20", "--retries", "2",
            "--format", "bestvideo[height<=720]+bestaudio/best[height<=720]/best",
            "--merge-output-format", "mp4",
@@ -247,8 +247,12 @@ def yt_download(url, folder):
     candidates = [f for f in folder.glob("source.*")
                   if f.suffix.lower() in {".mp4", ".webm", ".mkv"}]
     if p.returncode or not candidates:
-        msg = (p.stderr or p.stdout or "")[-650:]
-        raise RuntimeError("YouTube import could not complete. Hosting may block YouTube downloads. Upload a video you own instead. " + msg)
+        details = (p.stderr or p.stdout or "").lower()
+        if "403" in details or "forbidden" in details or "sign in" in details or "bot" in details:
+            raise RuntimeError("YouTube refused this server's download request (HTTP 403 or access restriction). This can happen on cloud hosting even with the JavaScript runtime installed. Try uploading your own video file instead.")
+        if "javascript" in details or "js runtime" in details or "ejs" in details:
+            raise RuntimeError("YouTube extractor needs its JavaScript runtime or solver. Please contact the app administrator.")
+        raise RuntimeError("YouTube could not import this video. Try uploading a file you own instead.")
     captions = sorted(folder.glob("*.vtt"), key=lambda x: ("en" not in x.name, x.name))
     return candidates[0], (captions[0] if captions else None)
 
