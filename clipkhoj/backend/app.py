@@ -34,6 +34,7 @@ app.add_middleware(
     allow_origins=[
         "https://clipkhoj-video-finder-v2.onrender.com",
         "https://clipkhoj-mobile.onrender.com",
+        "https://clipkhoj-auto-shorts-v3.onrender.com",
     ],
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
