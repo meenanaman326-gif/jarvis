@@ -1,0 +1,42 @@
+/* ShortsFX visual effect picker for Chrome and Android */
+:root{--fg:#f4f4ff;--ink:#121526;--muted:#b3bad1;--violet:#a87bff}
+.visual-picker{background:radial-gradient(circle at 10% 0%,#282047 0%,#151827 55%);border-color:#514376}
+.visual-picker .eyebrow{font-size:12px;font-weight:800;letter-spacing:1.2px;color:#d6baff;text-transform:uppercase}
+.visual-picker h2{font-size:25px;letter-spacing:-.6px;margin:6px 0 5px}
+.picker-help{color:#b9b6cf;font-size:13px;margin:4px 0 17px}
+.picker-guide{display:flex;align-items:center;gap:8px;background:#24233f;border:1px solid #41365b;border-radius:12px;padding:10px 12px;margin-bottom:16px;color:#ebd9ff;font-size:13px}
+.gallery-search{margin:0 0 12px!important;padding:12px 14px!important}
+.effect-tags{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;padding:4px 0 13px;scrollbar-width:none}
+.effect-tags::-webkit-scrollbar{display:none}
+.effect-tags button{flex-shrink:0;white-space:nowrap;padding:8px 12px;border-radius:25px;font-size:12px;font-weight:700;border:1px solid #40415c;background:#22243a;color:#d1d3e5}
+.effect-tags button.active{color:#1d1233;background:#c6a4ff;border-color:#e9d8ff}
+.effect-note{display:flex;justify-content:space-between;align-items:center;color:#acafd0;font-size:12px;margin:4px 0 12px}
+.effect-gallery{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;margin:6px 0 14px!important}
+.effect-card{position:relative;min-width:0;overflow:hidden;border-radius:15px!important;background:#1d2134!important;border:1px solid #41445c!important;padding:0!important;text-align:left;display:flex!important;flex-direction:column;min-height:0!important;transition:transform .15s,border-color .15s,box-shadow .15s}
+.effect-card:active{transform:scale(.985)}
+.effect-card[aria-pressed="true"]{border:2px solid #d9b7ff!important;box-shadow:0 0 0 2px #5a377a}
+.effect-poster{position:relative;width:100%;aspect-ratio:9/12;min-height:136px;max-height:210px;background-color:#2a2343;background-repeat:no-repeat;overflow:hidden}
+.effect-poster.has-sprite{background-size:900% 400%;background-position:var(--x) var(--y);background-repeat:no-repeat;aspect-ratio:180/310}
+.effect-poster.visual-cue{display:flex;justify-content:center;align-items:center;background:radial-gradient(circle at 25% 15%,#9367d977 0,transparent 45%),radial-gradient(circle at 80% 95%,#e6659e44 0,transparent 40%),linear-gradient(145deg,#26203d,#161b30)}
+.effect-cue-icon{font-size:55px;line-height:1;filter:drop-shadow(0 8px 15px #0009);transform:rotate(-6deg)}
+.effect-poster::after{content:"";position:absolute;inset:65% 0 0;background:linear-gradient(transparent,#151827aa)}
+.effect-preview-label{position:absolute;z-index:1;bottom:7px;left:8px;font-size:10px;color:#fff;background:#080b12a8;border-radius:5px;padding:3px 7px}
+.effect-card .card-body{padding:10px 10px 12px;flex:1}
+.effect-card .card-title{font-size:13px;font-weight:800;color:#fff;line-height:1.3;margin-bottom:5px}
+.effect-card .card-desc{color:#b7b8cf;font-size:12px;line-height:1.35;min-height:34px}
+.effect-card .card-footer{font-size:11px;display:flex;justify-content:space-between;gap:5px;margin-top:9px;color:#c3b1e8}
+.effect-card .card-choose{font-weight:850;color:#d2a4ff}
+.effect-card[aria-pressed="true"] .card-choose{color:#c9ffdd}
+.effect-card .featured{position:absolute;z-index:2;top:7px;right:7px;font-size:9px;font-weight:750;background:#18152bde;color:#fff;border:1px solid #8f67ca;padding:4px 6px;border-radius:12px}
+.effect-selected{border:1px solid #8568b5;background:#2a2247;padding:12px;border-radius:13px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:13px 0}
+.effect-selected strong{color:#fff}.effect-selected small{color:#c7bee0;display:block}
+.effect-selected button{background:#9672ea;color:#0f0d1b;font-size:12px;font-weight:850;padding:10px 13px}
+.effect-results-empty{text-align:center;color:#afbed5;grid-column:1/-1;padding:25px}
+#edit .effect-gallery{margin-top:12px!important}
+#edit .effect-poster{max-height:170px}
+#edit .effect-card .card-desc{min-height:30px}
+#edit #effects{max-height:640px;overflow-y:auto;padding:2px}
+#edit .effect-picker-heading{display:block}
+@media(min-width:530px){.effect-gallery{grid-template-columns:repeat(3,minmax(0,1fr))!important}.effect-poster{max-height:225px}}
+@media(min-width:790px){.effect-gallery{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
+@media(prefers-reduced-motion:reduce){.effect-card{transition:none}}
