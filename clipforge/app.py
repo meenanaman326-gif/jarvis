@@ -85,7 +85,16 @@ def submit():
         return jsonify(error="Confirm that you own the footage or have permission to clip it."), 400
     clean_old()
     upload = request.files.get("video")
+    captions = request.files.get("captions")
     url = request.form.get("youtube_url", "").strip()
+    # Android file pickers may ignore the accepted file type. If an MP4 was
+    # accidentally selected in the optional subtitles field, use it as video.
+    video_extensions = {".mp4", ".mov", ".mkv", ".webm", ".m4v"}
+    if captions and captions.filename and Path(captions.filename).suffix.lower() in video_extensions:
+        if not (upload and upload.filename):
+            upload = captions
+            url = ""
+        captions = None
     if not (upload and upload.filename) and not url:
         return jsonify(error="Upload a video or paste an authorized YouTube link."), 400
     if url and not safe_youtube_url(url):
@@ -114,7 +123,6 @@ def submit():
             shutil.rmtree(directory, ignore_errors=True)
             return jsonify(error="Video exceeds the 170MB free-hosting limit."), 413
 
-    captions = request.files.get("captions")
     caption_path = None
     if captions and captions.filename:
         suffix = Path(captions.filename).suffix.lower()
