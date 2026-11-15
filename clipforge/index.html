@@ -9,7 +9,7 @@
 <form id="jobForm"><div id="uploadBox" class="upload"><div class="emoji">☁️</div><label for="video">Choose a video file</label><small>MP4, MOV, MKV, WebM · up to 170 MB · 30 min</small><input id="video" type="file" accept="video/mp4,video/quicktime,video/x-matroska,video/webm,video/*"><div class="filehelp" id="filename"></div></div>
 <div id="urlBox" class="hidden"><label for="youtube_url">YouTube video URL</label><input type="url" id="youtube_url" placeholder="https://youtu.be/..." inputmode="url"><p class="note">Only link videos you own or are licensed to reuse. Important: YouTube is currently refusing many cloud-server imports with HTTP 403. If it fails, use the original video file instead.</p></div>
 <div class="two"><div><label for="length">Short length</label><select id="length"><option value="15">15 seconds</option><option value="30" selected>30 seconds</option><option value="45">45 seconds</option><option value="60">60 seconds</option></select></div><div><label for="count">Number of clips</label><select id="count"><option value="1">1 clip</option><option value="3" selected>3 clips</option><option value="5">5 clips</option><option value="10">10 clips</option></select></div></div>
-<label for="captions">Subtitles (optional)</label><input type="file" id="captions" accept=".srt,.vtt"><p class="note">Upload SRT/VTT to burn captions onto Shorts. When accessible, YouTube captions may be imported automatically. Speech transcription is not included in this free beta.</p>
+<label for="captions">Optional subtitle file (.srt / .vtt only — NOT MP4)</label><input type="file" id="captions" accept=".srt,.vtt,text/vtt,application/x-subrip"><p class="note">Upload SRT/VTT to burn captions onto Shorts. When accessible, YouTube captions may be imported automatically. Speech transcription is not included in this free beta.</p>
 <label for="password">Agent password</label><input id="password" type="password" placeholder="Enter your server's agent password" autocomplete="off" required><p class="note">Set AGENT_PASSWORD in Render environment settings. It protects your server from public processing abuse.</p>
 <label class="check"><input id="rights" type="checkbox" required><span>I own this video or have permission to edit and republish its content.</span></label>
 <button class="primary" id="generate" type="submit">✦ Find highlights & generate Shorts</button></form>
@@ -22,6 +22,13 @@
 const $=id=>document.getElementById(id), uploadTab=$("uploadTab"),youtubeTab=$("youtubeTab");let mode="upload",job=null;
 function switchMode(next){mode=next;uploadTab.classList.toggle("active",mode==="upload");youtubeTab.classList.toggle("active",mode==="youtube");$("uploadBox").classList.toggle("hidden",mode!=="upload");$("urlBox").classList.toggle("hidden",mode!=="youtube")}
 uploadTab.onclick=()=>switchMode("upload");youtubeTab.onclick=()=>switchMode("youtube");$("video").onchange=()=>{$("filename").textContent=$("video").files[0]?.name||""};
+$("captions").onchange=()=>{
+  const file=$("captions").files[0];if(!file)return;
+  if(/\.(mp4|mov|mkv|m4v|webm)$/i.test(file.name)){
+    try{const data=new DataTransfer();data.items.add(file);$("video").files=data.files;switchMode("upload");$("filename").textContent=file.name;$("captions").value="";message("✅ MP4 selected as video automatically. Subtitles are optional — leave that field empty.");$("uploadBox").scrollIntoView({behavior:"smooth",block:"center"});}
+    catch(e){message("This is a video, not a subtitle. Select the MP4 in the Upload video box and leave subtitles empty.");$("captions").value="";}
+  }else if(!/\.(srt|vtt)$/i.test(file.name)){message("Subtitle field only accepts .srt or .vtt files.");$("captions").value="";}
+};
 function message(str){$("status").style.display="block";$("status").textContent=str}
 function progress(p){$("bar").style.display="block";$("barFill").style.width=p+"%"}
 function fmt(n){const m=Math.floor(n/60),s=Math.floor(n%60);return m+":"+String(s).padStart(2,"0")}
