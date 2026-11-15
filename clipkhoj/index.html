@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#10131b" />
+<meta name="description" content="Find free-license video clips and discover trending video searches from your mobile phone." />
+<title>ClipKhoj · Simple Video Finder</title>
+<style>
+:root{color-scheme:dark;--bg:#0a0d14;--panel:#151a27;--panel2:#1d2433;--border:#323c4d;--text:#f5f7fb;--muted:#a6b0c0;--blue:#7fb4ff;--pink:#d8a6fc;--green:#8fdcc5;--radius:19px}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(800px 420px at 50% -160px,#253c63 0%,transparent 76%),var(--bg);font-family:system-ui,-apple-system,Roboto,Arial,sans-serif;color:var(--text);line-height:1.5}button,input,a{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.wrap{width:min(900px,100%);margin:auto;padding:26px 16px 80px}.header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:42px}.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;letter-spacing:-.04em}.mark{display:grid;place-items:center;background:linear-gradient(135deg,#76aaff,#c19aff);color:#0b1422;border-radius:13px;width:39px;height:39px;font-size:21px}.tag{font-size:11px;color:var(--green);border:1px solid #355b55;border-radius:30px;padding:5px 10px;font-weight:700;white-space:nowrap}
+h1{margin:0;font-size:clamp(36px,9.8vw,64px);letter-spacing:-.065em;line-height:1.06}.accent{color:var(--blue)}.lead{color:var(--muted);font-size:15px;max-width:620px;margin:16px 0 25px}.search-panel{background:var(--panel);border:1px solid var(--border);border-radius:24px;padding:17px;box-shadow:0 18px 80px #0004}.switch{display:grid;grid-template-columns:1fr 1fr;background:#0d111c;padding:5px;border-radius:13px;margin-bottom:16px;gap:4px}.tab{border:0;border-radius:10px;color:var(--muted);background:transparent;font-size:13px;font-weight:700;padding:11px 6px}.tab[aria-selected=true]{background:#2b374d;color:white}.input-label{display:block;font-size:13px;color:var(--muted);font-weight:650;margin:0 0 8px}.searchrow{display:flex;gap:9px}input{width:100%;min-width:0;background:#101521;border:1px solid #3b4555;padding:13px 14px;border-radius:13px;color:white;outline:none;font-size:16px}input::placeholder{color:#8993a7}.action{border:none;color:#101825;background:linear-gradient(130deg,#87b8ff,#ba9fff);border-radius:13px;padding:12px 17px;font-weight:800;white-space:nowrap}.action:disabled{opacity:.65;cursor:wait}.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.chip{border:1px solid #3d485a;border-radius:99px;background:#232b3a;color:#dce3ed;padding:6px 12px;font-size:12px}.chip:hover{border-color:#82b6ff}.smallnote{font-size:12px;color:#b7c2d1;margin:14px 0 2px}.alert{display:none;margin-top:15px;padding:12px;border-radius:12px;color:#d5e9fb;border:1px solid #3d536d;background:#172536;font-size:13px}.alert.show{display:block}.stats{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:31px 2px 13px}.stats h2{margin:0;font-size:20px;letter-spacing:-.04em}.stats span{font-size:12px;color:var(--muted)}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(246px,1fr));gap:14px}.card{background:var(--panel);border:1px solid var(--border);border-radius:18px;overflow:hidden}.thumb{background:linear-gradient(125deg,#1d273a,#344459);aspect-ratio:16/9;display:grid;place-items:center;overflow:hidden;position:relative}.thumb img{width:100%;height:100%;object-fit:cover}.play{position:absolute;inset:auto auto 12px 12px;border:1px solid #fff6;background:#10151bb9;border-radius:999px;padding:5px 10px;font-size:11px}.info{padding:14px}.name{font-size:15px;font-weight:750;line-height:1.4;min-height:42px;overflow-wrap:anywhere;margin:0 0 10px}.pills{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}.pill{border:1px solid #415267;border-radius:100px;padding:3px 8px;font-size:10px;color:#c4d6ef;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}.btn{border:1px solid #45516a;background:#29364b;color:white;border-radius:10px;padding:10px 8px;text-align:center;font-size:12px;font-weight:700;display:grid;place-items:center;min-height:42px}.btn.primary{background:#80b5fb;color:#101724;border-color:#80b5fb}.byline{font-size:11px;color:#aebad0;line-height:1.4;margin-top:12px;overflow-wrap:anywhere}.empty{padding:30px 18px;background:var(--panel);border-radius:18px;border:1px dashed var(--border);color:#c6d0dc;font-size:14px}.empty strong{color:white}.hidden{display:none!important}.discovery{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:13px}.source{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--border);padding:17px;border-radius:16px}.source small{color:var(--muted)}.source strong{font-size:15px}.source .go{background:#2b3548;border:1px solid #4e627b;border-radius:11px;padding:10px 14px;font-size:12px;font-weight:750}.disclaimer{margin-top:33px;padding:19px;border:1px solid #303a4a;border-radius:18px;background:#111823;font-size:12px;color:var(--muted)}.disclaimer strong{color:#eaf1fa}.footer{margin-top:20px;text-align:center;font-size:11px;color:#788596}
+@media(max-width:420px){.wrap{padding:20px 13px 55px}.header{margin-bottom:35px}.tag{font-size:10px}.search-panel{padding:14px}.action{padding:12px 13px}.cards{grid-template-columns:1fr}.stats{margin-top:25px}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header class="header"><div class="brand"><div class="mark">▶</div> ClipKhoj</div><div class="tag">📱 Mobile-friendly</div></header>
+<section aria-label="Introduction"><h1>Videos dhoondo.<br><span class="accent">Asaani se.</span></h1><p class="lead">No Colab. No code. Free-license videos dekho aur original file download karo. YouTube / Instagram video searches bhi khol sakte ho.</p></section>
+<section class="search-panel" aria-label="Search videos">
+ <div class="switch" role="tablist" aria-label="Search type"><button class="tab" id="freeTab" role="tab" aria-selected="true" aria-controls="freeMode" type="button">📥 Free clips</button><button class="tab" id="trendingTab" role="tab" aria-selected="false" aria-controls="trendingMode" type="button">🔥 Viral links</button></div>
+ <div id="freeMode" role="tabpanel" aria-labelledby="freeTab">
+ <label class="input-label" for="keyword">Kis topic ki video chahiye?</label><form id="searchForm" class="searchrow"><input id="keyword" type="search" maxlength="80" enterkeyhint="search" autocomplete="off" placeholder="e.g. fast car, nature, space" value="cars" required /><button id="searchBtn" class="action" type="submit">Search ↗</button></form>
+ <div class="chips" aria-label="Quick topics"><button type="button" class="chip" data-keyword="cars">🏎️ Cars</button><button type="button" class="chip" data-keyword="nature">🌿 Nature</button><button type="button" class="chip" data-keyword="space">🚀 Space</button><button type="button" class="chip" data-keyword="animals">🐾 Animals</button><button type="button" class="chip" data-keyword="gaming">🎮 Gaming</button></div>
+ <p class="smallnote">Source: Wikimedia Commons. Results are openly licensed clips, not verified viral videos. File format may be WebM, OGV or MP4.</p></div>
+ <div id="trendingMode" class="hidden" role="tabpanel" aria-labelledby="trendingTab">
+ <label class="input-label" for="viralKeyword">Popular video ka topic</label><div class="searchrow"><input id="viralKeyword" type="search" value="GTA 6" placeholder="GTA 6, Marvel, gaming" maxlength="80"/><button class="action" id="showLinks" type="button">Find ↗</button></div>
+ <p class="smallnote">YouTube aur Instagram links discovery ke liye. In platforms se video files automatically download nahi hoti.</p>
+ </div>
+ <div id="status" class="alert" role="status" aria-live="polite"></div>
+</section>
+<div class="stats"><h2 id="resultsTitle">Free licensed videos</h2><span id="resultsCount">Search to begin</span></div>
+<section id="videoResults" class="cards" aria-label="Search results"><div class="empty"><strong>Start karo 👆</strong><br>Cars, nature ya gaming choose karke Search dabao. Agar koi suitable file nahi mili, source search ka link bhi milega.</div></section>
+<section id="viralResults" class="discovery hidden" aria-label="Platform search links"></section>
+<aside class="disclaimer"><strong>Copyright & download note</strong><p>Har clip ka creator/license check karo. CC BY/CC BY-SA mein credit dena hota hai; SA mein remix ko same compatible license mein share karna pad sakta hai. <a href="https://commons.wikimedia.org/wiki/Commons:Reusing_content_outside_Wikimedia" target="_blank" rel="noopener noreferrer" style="color:var(--blue);text-decoration:underline">License guide ↗</a></p><p>Download button original file kholta hai. Android Chrome mein video khulne par ⋮ → Download ya video par long-press karke save karna pad sakta hai. Instagram/YouTube copyrighted videos bypass karke download nahi karte.</p></aside>
+<p class="footer">ClipKhoj • Made for mobile • No API key required for Commons search</p>
+</main>
+<script>
+(()=>{
+const $=s=>document.querySelector(s), status=$('#status'), freeTab=$('#freeTab'), trendingTab=$('#trendingTab');
+const videoResults=$('#videoResults'),viralResults=$('#viralResults');let requestId=0;
+function setStatus(message){status.textContent=message;status.classList.toggle('show',Boolean(message))}
+function textFromHtml(str){const d=new DOMParser().parseFromString(String(str||''),'text/html');return(d.body.textContent||'').replace(/\s+/g,' ').trim()}
+function safeLink(input,allowed){try{const u=new URL(input);return u.protocol==='https:'&&(!allowed||allowed.includes(u.hostname))?u.href:null}catch{return null}}
+function el(tag,klass,text){const n=document.createElement(tag);if(klass)n.className=klass;if(text!==undefined)n.textContent=text;return n}
+function link(label,url,klass){const a=el('a',klass,label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a}
+function showMode(mode){const free=mode==='free';$('#freeMode').classList.toggle('hidden',!free);$('#trendingMode').classList.toggle('hidden',free);videoResults.classList.toggle('hidden',!free);viralResults.classList.toggle('hidden',free);freeTab.setAttribute('aria-selected',String(free));trendingTab.setAttribute('aria-selected',String(!free));$('#resultsTitle').textContent=free?'Free licensed videos':'Viral video search links';$('#resultsCount').textContent=free?(videoResults.dataset.count||'Search to begin'):'Search opens official platforms';setStatus('')}
+freeTab.addEventListener('click',()=>showMode('free'));trendingTab.addEventListener('click',()=>showMode('trending'));
+function licenseOk(license){return /^(CC\s*BY(?:-SA)?(?:[-\s]\d(?:\.\d)?)?|CC0|public\s*domain|PD(?:-|\s|$))/i.test(license.trim())}
+function makeCard(item){
+ const card=el('article','card'),thumb=el('div','thumb');
+ const preview=safeLink(item.preview,['upload.wikimedia.org']);
+ if(preview){const img=el('img');img.src=preview;img.alt='Preview image';img.loading='lazy';thumb.append(img)}else thumb.append(el('div','', '🎞️'));
+ thumb.append(el('div','play','Video file'));
+ const info=el('div','info');info.append(el('h3','name',item.title.replace(/^File:/,'')));
+ const pills=el('div','pills');for(const t of [item.license,item.format,item.size])pills.append(el('span','pill',t));info.append(pills);
+ const buttons=el('div','buttons');buttons.append(link('⬇ Open / Download',item.file,'btn primary'));buttons.append(link('↗ Source & license',item.source,'btn'));info.append(buttons);
+ const attribution=[item.title,item.author||'See source for author',item.license,item.source].join(' | ');
+ const credit=el('button','btn','Copy credit');credit.style.width='100%';credit.style.marginTop='8px';credit.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(attribution);credit.textContent='✅ Credit copied'}catch{credit.textContent='See source for credit'}});info.append(credit);
+ info.append(el('div','byline','Credit: '+(item.author||'See the original source page')));card.append(thumb,info);return card;
+}
+async function fetchCommons(term){const qs=new URLSearchParams({action:'query',format:'json',origin:'*',generator:'search',gsrnamespace:'6',gsrsearch:`filetype:video ${term}`,gsrlimit:'50',prop:'imageinfo',iiprop:'url|size|mime|extmetadata',iiurlwidth:'500'});
+ const r=await fetch('https://commons.wikimedia.org/w/api.php?'+qs,{headers:{Accept:'application/json'}});if(!r.ok)throw Error(`Wikimedia API returned ${r.status}`);const j=await r.json();if(j.error)throw Error(j.error.info||'API error');return Object.values(j.query?.pages||{});
+}
+function parseItem(page){const i=page.imageinfo?.[0];if(!i)return null;const file=safeLink(i.url,['upload.wikimedia.org']);if(!file)return null;const mime=i.mime||'';if(!mime.startsWith('video/'))return null;
+ const m=i.extmetadata||{},raw=k=>textFromHtml(m[k]?.value||'');const license=raw('LicenseShortName');if(!licenseOk(license))return null;
+ const author=raw('Artist').slice(0,170);const source=safeLink(i.descriptionurl,['commons.wikimedia.org'])||`https://commons.wikimedia.org/wiki/${encodeURIComponent(page.title.replaceAll(' ','_'))}`;
+ const size=i.size?`${(i.size/1024/1024).toFixed(1)} MB`:'Size unknown';return{title:page.title||'Video',file,source,license,author,format:mime.split('/')[1].toUpperCase(),size,preview:i.thumburl};
+}
+async function search(){const term=$('#keyword').value.trim();if(!term){setStatus('Pehle topic type karo.');return}const id=++requestId;const button=$('#searchBtn');button.disabled=true;button.textContent='Finding…';setStatus('Free-license clips search ho rahe hain…');$('#resultsCount').textContent='Searching';videoResults.replaceChildren();
+ try{const pages=await fetchCommons(term);if(id!==requestId)return;const list=pages.map(parseItem).filter(Boolean).slice(0,20);videoResults.dataset.count=`${list.length} files`;$('#resultsCount').textContent=`${list.length} files`;
+ if(!list.length){const box=el('div','empty');box.append(el('strong','','Is topic par download results nahi mile.'));box.append(el('p','', 'Try: nature, cats, cars, animals, space. GTA 6 ya Marvel jaise copyrighted topics par fewer free-license clips mil sakte hain.'));
+ const queryUrl='https://commons.wikimedia.org/w/index.php?search='+encodeURIComponent('filetype:video '+term)+'&title=Special:MediaSearch&type=video';box.append(link('↗ Search Wikimedia Commons',queryUrl,'btn'));videoResults.append(box);setStatus('No matching verified open-license video files found.');
+ }else{list.forEach(v=>videoResults.append(makeCard(v)));setStatus(`${list.length} video file(s) listed. Format aur attribution check karke Download tap karo.`)}
+ }catch(err){if(id!==requestId)return;const box=el('div','empty');box.append(el('strong','','Search connect nahi ho paya.'));box.append(el('p','', 'Internet check karo aur dobara Search dabao. Wikimedia server temporarily busy bhi ho sakta hai.'));const fallback='https://commons.wikimedia.org/w/index.php?search='+encodeURIComponent(term)+'&title=Special:MediaSearch&type=video';box.append(link('↗ Open Commons directly',fallback,'btn'));videoResults.append(box);$('#resultsCount').textContent='Connection issue';setStatus('Could not connect to Wikimedia Commons. Please retry.');console.warn(err)}finally{if(id===requestId){button.disabled=false;button.textContent='Search ↗'}}}
+$('#searchForm').addEventListener('submit',e=>{e.preventDefault();search()});document.querySelectorAll('[data-keyword]').forEach(b=>b.addEventListener('click',()=>{$('#keyword').value=b.dataset.keyword;search()}));
+function makeSource(name,desc,url){const card=el('div','source'),left=el('div');left.append(el('strong','',name),el('br'),el('small','',desc));card.append(left,link('Open ↗',url,'go'));return card}
+function discover(){const term=$('#viralKeyword').value.trim()||'GTA 6';viralResults.replaceChildren();viralResults.append(makeSource('▶ YouTube','Search popular videos & Shorts','https://www.youtube.com/results?search_query='+encodeURIComponent(term+' Shorts')),makeSource('◎ Instagram','Open Instagram and search this topic','https://www.instagram.com/'),makeSource('🔎 Google Videos','Search videos across the web','https://www.google.com/search?tbm=vid&q='+encodeURIComponent(term)));setStatus('These are discovery links only. Download permission depends on the platform and creator.');}
+$('#showLinks').addEventListener('click',discover);$('#viralKeyword').addEventListener('keydown',e=>{if(e.key==='Enter')discover()});
+})();
+</script>
+</body>
+</html>
