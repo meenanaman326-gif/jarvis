@@ -22,6 +22,21 @@ h1{margin:0;font-size:clamp(36px,9.8vw,64px);letter-spacing:-.065em;line-height:
 .embed-card .btn{width:100%;font-size:14px}.url-error{color:#ffcfcf;font-size:13px}
 .link-row{display:flex;gap:9px}
 @media(max-width:540px){.link-row{flex-direction:column}.link-row .action{width:100%;min-height:47px}}
+
+.highlights{margin:22px 0 20px;border:1px solid #526684;background:linear-gradient(150deg,#162640,#171b2b);border-radius:23px;padding:18px}
+.highlights h2{font-size:22px;margin:0 0 6px;letter-spacing:-.04em}
+.highlights .intro{margin:0 0 14px;font-size:13px;color:#c3d1e3}
+.highlights select,.highlights input[type=file]{display:block;width:100%;padding:11px;background:#121a29;color:#fff;border:1px solid #465775;border-radius:11px;margin:7px 0 13px;font:inherit;font-size:14px}
+.highlights .config{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.highlights .config label{font-size:12px;color:#bfd0e6}
+.highlights .rights{display:flex;align-items:start;gap:9px;font-size:12px;color:#cdd8e8;margin:0 0 14px}
+.highlights .rights input{width:17px;height:17px;flex:none}
+.highlights button.action{width:100%;min-height:48px}
+.highlights-status{font-size:13px;line-height:1.5;color:#b9d6f6;margin-top:13px;white-space:pre-line}
+.highlight-clips{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin-top:15px}
+.highlight-clip{border:1px solid #435674;border-radius:14px;padding:11px;background:#101827}
+.highlight-clip video{width:100%;aspect-ratio:9/16;max-height:320px;border-radius:9px;background:#000}
+.highlight-clip .btn{margin-top:10px}
 </style>
 </head>
 <body>
@@ -34,6 +49,24 @@ h1{margin:0;font-size:clamp(36px,9.8vw,64px);letter-spacing:-.065em;line-height:
  <p class="smallnote">YouTube video ya Shorts yahin preview karo. Instagram/Reels ke liye original video open hoga. YouTube/Instagram se download ka option nahi hai.</p>
  <form id="linkForm" class="link-row"><input id="videoLink" type="url" inputmode="url" enterkeyhint="go" placeholder="https://youtu.be/... ya Instagram Reel link" aria-label="YouTube Instagram video URL" required maxlength="2048" /><button type="submit" id="previewBtn" class="action">▶ Show video</button></form>
  <div id="linkOutput" class="link-result" aria-live="polite"></div>
+</section>
+
+<section class="highlights" id="autoHighlights">
+<h2>✨ Auto Highlights → Shorts</h2>
+<p class="intro">Apni video upload karo. System audio peaks aur fast visual changes se best moments choose karega aur 9:16 MP4 clips banayega. Video ka meaning/story samajhne wala AI abhi nahi hai.</p>
+<form id="highlightsForm">
+<label class="input-label" for="clipUpload">Apna video select karo (MP4 / MOV / WebM / MKV, max 125 MB, 15 min)</label>
+<input type="file" id="clipUpload" accept="video/mp4,video/quicktime,video/webm,video/x-matroska,.m4v" required>
+<div class="config">
+<label>Clip length<select id="clipSeconds"><option value="15">15 seconds</option><option value="20" selected>20 seconds</option><option value="30">30 seconds</option></select></label>
+<label>Number of clips<select id="clipCount"><option value="1">1 clip</option><option value="2">2 clips</option><option value="3" selected>3 clips</option></select></label>
+</div>
+<label class="rights"><input type="checkbox" id="clipRights" required><span>Video meri khud ki hai ya mujhe edit/download karne ki permission hai.</span></label>
+<button id="clipStart" class="action" type="submit">✂️ Make My Shorts</button>
+</form>
+<div class="highlights-status" id="clipStatus" role="status" aria-live="polite"></div>
+<div id="clipResults" class="highlight-clips"></div>
+<p class="smallnote">Private / personal video: file processing ke liye server par upload hoti hai aur temporary storage mein rahti hai. Sensitive videos upload mat karo. Server heavy videos ko process na kar paye.</p>
 </section>
 <section class="search-panel" aria-label="Search videos">
  <div class="switch" role="tablist" aria-label="Search type"><button class="tab" id="freeTab" role="tab" aria-selected="true" aria-controls="freeMode" type="button">📥 Free clips</button><button class="tab" id="trendingTab" role="tab" aria-selected="false" aria-controls="trendingMode" type="button">🔥 Viral links</button></div>
@@ -102,6 +135,59 @@ function showLinkedVideo(value){
  info.append(link('↗ Open original video',u.href,'btn primary'));card.append(info);out.append(card);
 }
 $('#linkForm').addEventListener('submit',e=>{e.preventDefault();showLinkedVideo($('#videoLink').value)});
+
+
+const CLIPS_API='https://clipkhoj-auto-highlights-api.onrender.com';
+function clipMessage(s){document.querySelector('#clipStatus').textContent=s}
+async function clipStatusPoll(id,attempt=0){
+ if(attempt>100){clipMessage('Processing timeout. Chhoti video try karo.');return}
+ try{
+  const res=await fetch(CLIPS_API+'/api/status/'+encodeURIComponent(id));
+  const obj=await res.json();
+  if(!res.ok)throw Error(obj.detail||'Status unavailable');
+  clipMessage(obj.message||'Processing...');
+  if(obj.state==='done'){
+   const container=document.querySelector('#clipResults');container.replaceChildren();
+   for(const item of obj.clips||[]){
+    const card=document.createElement('article');card.className='highlight-clip';
+    const title=document.createElement('strong');title.textContent='Highlight • '+Math.round(item.start_second)+'s';
+    const player=document.createElement('video');player.controls=true;player.preload='none';player.playsInline=true;
+    const url=CLIPS_API+item.download;player.src=url;
+    const down=document.createElement('a');down.href=url;down.className='btn primary';down.textContent='⬇ Download MP4';down.target='_blank';down.rel='noopener noreferrer';
+    card.append(title,player,down);container.append(card);
+   }
+   document.querySelector('#clipStart').disabled=false;
+   return;
+  }
+  if(obj.state==='error')throw Error(obj.message||'Export failed');
+ }catch(e){clipMessage('Error: '+e.message);document.querySelector('#clipStart').disabled=false;return}
+ setTimeout(()=>clipStatusPoll(id,attempt+1),3000);
+}
+document.querySelector('#highlightsForm').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const file=document.querySelector('#clipUpload').files[0];
+ if(!file){clipMessage('Pehle video choose karo.');return}
+ if(file.size>125*1024*1024){clipMessage('Video 125 MB se badi hai. Chhoti file select karo.');return}
+ if(!document.querySelector('#clipRights').checked){clipMessage('Rights/permission confirm karna zaroori hai.');return}
+ const btn=document.querySelector('#clipStart');btn.disabled=true;
+ document.querySelector('#clipResults').replaceChildren();
+ clipMessage('Uploading video... Phone par network stable rakho.');
+ const body=new FormData();
+ body.append('video',file);body.append('seconds',document.querySelector('#clipSeconds').value);
+ body.append('count',document.querySelector('#clipCount').value);body.append('rights','true');
+ try{
+  const controller=new AbortController();const t=setTimeout(()=>controller.abort(),150000);
+  let res;
+  try{res=await fetch(CLIPS_API+'/api/clips',{method:'POST',body,signal:controller.signal})}finally{clearTimeout(t)}
+  const obj=await res.json().catch(()=>({}));
+  if(!res.ok)throw Error(obj.detail||('Server error '+res.status));
+  clipMessage('Upload complete. Highlights analyze ho rahe hain...');
+  clipStatusPoll(obj.job_id);
+ }catch(e){
+  clipMessage('Upload / processing server issue: '+e.message+' — 15-60 sec ka chhota MP4 try karo.');
+  btn.disabled=false;
+ }
+});
 
 function licenseOk(license){return /^(CC\s*BY(?:-SA)?(?:[-\s]\d(?:\.\d)?)?|CC0|public\s*domain|PD(?:-|\s|$))/i.test(license.trim())}
 function makeCard(item){
