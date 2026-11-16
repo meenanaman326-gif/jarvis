@@ -102,23 +102,40 @@ class Render(BaseModel):
     start:float=Field(ge=0)
     end:float=Field(gt=0)
     text:str=Field('',max_length=120)
-    quality:int=360
+    quality:int=270
     crop:str='fill'
+    fast:bool=True
 
 def render_worker(job,key,r):
     d,p,m=getmedia(key)
     clip=d/(job+'_clip.mp4');out=d/(job+'.mp4')
+    duration=r.end-r.start
     try:
-        JOBS[job].update(state='working',stage='Formatting vertical video…')
-        vf='fps=15,scale=360:640:force_original_aspect_ratio=' + ('decrease,pad=360:640:(ow-iw)/2:(oh-ih)/2' if r.crop=='fit' else 'increase,crop=360:640')+',setsar=1'
-        call(['ffmpeg','-nostdin','-v','error','-y','-ss',str(r.start),'-i',str(p),'-t',str(r.end-r.start),'-vf',vf,'-c:v','libx264','-preset','ultrafast','-crf','25','-pix_fmt','yuv420p','-c:a','aac','-movflags','+faststart',str(clip)],180)
-        JOBS[job]['stage']='Applying selected effects…'
-        cmd=['python','-u',str(ENGINE/'scripts/fx.py'),r.effect,str(clip),str(out),'--start','0','--end',str(probe(clip)['duration']),'--width',str(r.quality)]
-        if r.text:cmd+=['--text',r.text]
-        call(cmd,900)
+        # Native FFmpeg alternatives for common effects; noticeably lighter on free CPU.
+        native={
+            'moody':"eq=contrast=1.12:brightness=-0.045:saturation=0.75,vignette=PI/5",
+            'spotlight':"eq=contrast=1.13:saturation=0.95,vignette=PI/3",
+            'lean-in':"zoompan=z='min(zoom+0.006,1.20)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=270x480:fps=10",
+            'slow-push':"zoompan=z='min(zoom+0.0015,1.13)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=270x480:fps=10"
+        }
+        base='fps=10,scale=270:480:force_original_aspect_ratio=' + ('decrease,pad=270:480:(ow-iw)/2:(oh-ih)/2' if r.crop=='fit' else 'increase,crop=270:480')+',setsar=1'
+        if r.fast and r.effect in native:
+            JOBS[job].update(state='working',stage='Fast rendering: '+r.effect.replace('-',' ').title()+'…',method='Fast FFmpeg style')
+            vf=base+','+native[r.effect]
+            call(['ffmpeg','-nostdin','-threads','2','-v','error','-y','-ss',str(r.start),'-i',str(p),'-t',str(duration),'-vf',vf,'-map','0:v:0','-map','0:a:0?','-c:v','libx264','-preset','ultrafast','-crf','27','-pix_fmt','yuv420p','-c:a','aac','-movflags','+faststart',str(out)],180)
+        else:
+            fps,ww,hh=(10,270,480) if r.fast else (15,360,640)
+            base=f'fps={fps},scale={ww}:{hh}:force_original_aspect_ratio=' + (f'decrease,pad={ww}:{hh}:(ow-iw)/2:(oh-ih)/2' if r.crop=='fit' else f'increase,crop={ww}:{hh}')+',setsar=1'
+            JOBS[job].update(state='working',stage='Preparing vertical clip…',method='Original effect engine')
+            call(['ffmpeg','-nostdin','-threads','2','-v','error','-y','-ss',str(r.start),'-i',str(p),'-t',str(duration),'-vf',base,'-c:v','libx264','-preset','ultrafast','-crf','27','-pix_fmt','yuv420p','-c:a','aac','-movflags','+faststart',str(clip)],180)
+            JOBS[job]['stage']='Applying original effect (frame by frame)…'
+            width=min(r.quality,270) if r.fast else r.quality
+            cmd=['python','-u',str(ENGINE/'scripts/fx.py'),r.effect,str(clip),str(out),'--start','0','--end',str(probe(clip)['duration']),'--width',str(width)]
+            if r.text:cmd+=['--text',r.text]
+            call(cmd,480)
         probe(out)
-        JOBS[job].update(state='done',stage='Done',preview=f'/api/result/{key}/{job}',download=f'/api/download/{key}/{job}')
-    except Exception as e:JOBS[job].update(state='error',stage=str(e)[-250:])
+        JOBS[job].update(state='done',stage='Your MP4 is ready!',preview=f'/api/result/{key}/{job}',download=f'/api/download/{key}/{job}')
+    except Exception as e:JOBS[job].update(state='error',stage='Render failed: '+str(e)[-250:])
     finally:clip.unlink(missing_ok=True)
 
 @app.post('/api/render/{key}')
@@ -126,9 +143,12 @@ def render(key:str,r:Render):
     d,p,m=getmedia(key)
     if r.effect not in NAMES:raise HTTPException(400,'Invalid effect')
     if r.start>=r.end or r.end>m['duration']+.03 or r.end-r.start>45:raise HTTPException(400,'Choose a clip of up to 45 seconds')
-    if r.quality not in (360,540) or r.crop not in ('fill','fit'):raise HTTPException(400,'Invalid export settings')
+    if r.quality not in (270,360,540) or r.crop not in ('fill','fit'):raise HTTPException(400,'Invalid export settings')
+    for job_id,entry in JOBS.items():
+        if entry.get('key')==key and entry.get('state') in ('queued','working'):
+            return dict(job_id=job_id,already_running=True)
     j=uuid.uuid4().hex
-    JOBS[j]=dict(state='queued',stage='Waiting to render…',key=key)
+    JOBS[j]=dict(state='queued',stage='Waiting for renderer…',key=key,method='Original effect engine')
     QUEUE.submit(render_worker,j,key,r)
     return dict(job_id=j)
 
